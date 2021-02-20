@@ -108,7 +108,12 @@ class App extends React.Component <{
 
 		this.theme = this.getTheme(this.state.darkMode)
 
-		API.setLanguage(this.state.lang)
+		const lang = (this.cookies.get('language') ?? this.state.lang)
+		this.setState({ lang })
+		API.setLanguage(lang)
+		i18next.changeLanguage(lang).then(() => {
+			i18next.options.lng = lang
+		})
 	}
 
 	async componentDidMount() {
@@ -118,11 +123,6 @@ class App extends React.Component <{
 			if (darkMode !== this.state.darkMode) {
 				this.onChangeDarkMode(darkMode)
 			}
-		}
-
-		const language = this.cookies.get('language') ?? this.state.lang
-		if (language !== this.state.lang) {
-			this.changeLanguage(language)
 		}
 
 		// staticData.terms = await API.getAcademicTerms()
@@ -443,18 +443,24 @@ class App extends React.Component <{
 		this.showAlert(i18next.t('alert.schedule-to-image'), 'success')
 	}
 
-	changeLanguage(language: string): void {
+	async changeLanguage(language: string): Promise<void> {
+		const wasLoading = this.state.loading
 		this.setState({
-			lang: language
+			lang: language,
+			loading: true
 		})
 		i18next.changeLanguage(language).then(() => {
 			i18next.options.lng = language
 		})
 		API.setLanguage(language)
 
-		// Clear shifts?
+		const state = shortenDescriptions(this.state.selectedShifts)
 		this.clearSelectedShifts(false)
+		await this.buildState(state)
 
+		if (!wasLoading) {
+			this.setState({ loading: false })
+		}
 		this.cookies.set('language', language, { maxAge: 60*60*24*31*3 })
 	}
 

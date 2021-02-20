@@ -8,7 +8,7 @@ const prefix = 'https://fenix.tecnico.ulisboa.pt'
 export default async function (shifts: Shift[]): Promise<Record<string, string>> {
 	const shiftPage: Record<string, string> = {}
 	const courseUrls = Array.from(new Set(shifts.map(shift => shift.courseId)))
-	const courses = await Promise.all(courseUrls
+	await Promise.all(courseUrls
 		.map(courseId => API.getCourse(courseId)
 			.then(async c => {
 				if (!shiftPage[courseId]) {
@@ -22,7 +22,6 @@ export default async function (shifts: Shift[]): Promise<Record<string, string>>
 			}))
 	)
 
-	// WARNING: UNNECESSARY O(N^2)
 	// TODO: change forEach to reduce
 	const res: Record<string, string> = {}
 	shifts.forEach((shift: Shift) => {
